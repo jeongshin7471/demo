@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +12,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+	@Autowired
+	private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+	
 	@Bean
 	BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
@@ -24,13 +28,24 @@ public class SecurityConfig {
 			    .anyRequest().authenticated()
 			);
 
-			http.formLogin(auth -> auth
-			    .loginPage("/login")
-			    .loginProcessingUrl("/loginProc")
-			    .defaultSuccessUrl("/success")
-			    .failureUrl("/fail")
-			    .permitAll()
-			);
+		http.formLogin(auth -> auth
+		    .loginPage("/login")
+		    .loginProcessingUrl("/loginProc")
+		    .defaultSuccessUrl("/success")
+		    .failureUrl("/fail")
+		    .permitAll()
+		);
+		
+		http.logout(auth -> auth
+				.logoutUrl("/logout")
+				.logoutSuccessUrl("/login?logout")
+				.invalidateHttpSession(true)
+				.deleteCookies("JSESSIONID")
+				.permitAll()
+				);
+		
+		http.exceptionHandling(exception -> exception
+				.authenticationEntryPoint(customAuthenticationEntryPoint));
 		
 		return http.build();
 	}
